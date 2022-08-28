@@ -15,21 +15,36 @@ builder.Services.AddDbContext<StoreContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+#region Cors
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                    policy =>
+                    {
+                        policy.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials() //Cookie
+                        .WithOrigins("http://localhost:3000");
+                    });
+});
+#endregion
+
 var app = builder.Build();
 
 #region //สร้างข้อมูลจำลอง Fake data
-    using var scope = app.Services.CreateScope(); //using หลังท ํางํานเสร็จจะถูกท ําลํายจํากMemory
-    var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        await context.Database.MigrateAsync(); //สร้ําง DB ให้อัตโนมัติถ้ํายังไม่มี
-        await DbInitializer.Initialize(context); //สร้ํางข้อมูลสินค้ําจ ําลอง
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Problem migrating data");
-    }
+using var scope = app.Services.CreateScope(); //using หลังท ํางํานเสร็จจะถูกท ําลํายจํากMemory
+var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
+var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+try
+{
+    await context.Database.MigrateAsync(); //สร้ําง DB ให้อัตโนมัติถ้ํายังไม่มี
+    await DbInitializer.Initialize(context); //สร้ํางข้อมูลสินค้ําจ ําลอง
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Problem migrating data");
+}
 #endregion
 
 // Configure the HTTP request pipeline.
@@ -42,6 +57,9 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection(); Web
 
 app.UseRouting();
+
+app.UseCors(MyAllowSpecificOrigins);
+
 
 app.UseAuthorization();
 
