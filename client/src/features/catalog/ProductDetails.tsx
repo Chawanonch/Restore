@@ -1,24 +1,25 @@
 import { Grid, Typography, Divider, TableContainer, Table, TableBody, TableRow, TableCell } from '@mui/material';
-import axios from 'axios';
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import agent from '../../app/api/agent';
+import NotFound from '../../app/errors/NotFound';
+import LoadingComponent from '../../app/layout/LoadingComponent';
 import { Product } from '../../app/models/Product';
 
 export default function ProductDetails() {
-  const { id } = useParams()
+  const { id } = useParams<{id : any}>() //อ่ํานค่ําจํากพํารํามิเตอร์ที่ส่งมําตํามพําท (URL Parameters)
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
 
-
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/Products/${id}`)
-      .then((respons => setProduct(respons.data)))
+    agent.Catalog.details(parseInt(id))
+      .then((respons => setProduct(respons)))
       .catch(error => console.log(error))
       .finally(() => setLoading(false))
   }, [id]);
 
-  if (loading) return <h3>Loading....</h3>
-  if (!product) return <h1>Product not found</h1>
+  if (loading) return <LoadingComponent message="Loading Products....." />;
+  if (!product) return <NotFound/>
 
   return (
     <>
