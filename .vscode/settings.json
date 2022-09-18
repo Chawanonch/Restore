@@ -1,0 +1,26 @@
+{
+    "cSpell.words": [
+        "ขั้นตอนการเพิ่มสินค้าเข้าในตระกร้า"
+    ],
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "restore",
+            "database": "${workspaceFolder:Restore}/API/store.db"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "restore",
+            "database": "${workspaceFolder:Restore}/API/store.db"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:Restore}/API/store.db",
+            "name": "restore"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
