@@ -39,7 +39,7 @@ export default function Header(props: any) {
 
             <Switch
               onChange={props.handleMode} color="default" />
-            <Typography variant="h6" component="div">Chxiei-Restore</Typography>
+            <Typography variant="h6" component="div">Chxiei-Restores</Typography>
           </Box>
 
           <List sx={{ display: 'flex', alignItems: 'center' }}>
