@@ -2,54 +2,56 @@ import { LoadingButton } from '@mui/lab';
 import { Grid, Typography, Divider, TableContainer, Table, TableBody, TableRow, TableCell, TextField } from '@mui/material';
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import agent from '../../app/api/agent';
-import { useStoreContext } from '../../app/context/StoreContext';
 import NotFound from '../../app/errors/NotFound';
 import LoadingComponent from '../../app/layout/LoadingComponent';
-import { Product } from '../../app/models/Product';
+import { useAppSelector, useAppDispatch } from '../../app/store/configureStore';
+import { addBasketItemAsync, removeBasketItemAsync } from '../basket/basketSlice';
+import { fetchProductAsync, productSelectors } from './catalogSlice';
 
 export default function ProductDetails() {
-  const { id } = useParams<{ id: any }>() //อ่ํานค่ําจํากพํารํามิเตอร์ที่ส่งมําตํามพําท (URL Parameters)
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  const { basket, setBasket, removeItem } = useStoreContext();
+  const { id } = useParams<{ id: any }>(); //อ่ำนค่ำจำกพำรำมิเตอร์ที่ส่งมำตำมพำท (URL Parameters)
+  const product = useAppSelector(state => productSelectors.selectById(state, id));
+  const {status: productStatus} = useAppSelector(state => state.catalog);
+
+  const dispatch = useAppDispatch();
+  const { basket, status } = useAppSelector((state) => state.basket);
   const [quantity, setQuantity] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
   const item = basket?.items.find((i) => i.productId === product?.id);
 
   useEffect(() => {
-    if (item) setQuantity(item.quantity)
-
-    agent.Catalog.details(parseInt(id))
-      .then((respons => setProduct(respons)))
-      .catch(error => console.log(error))
-      .finally(() => setLoading(false))
-  }, [id, item]);
+    if (item) setQuantity(item.quantity);
+    if (!product) dispatch(fetchProductAsync(parseInt(id)))
+    }, [id,item,dispatch,product]);
 
   function handleInputChange(event: any) {
     if (event.target.value >= 0) {
       setQuantity(parseInt(event.target.value));
     }
   }
+
   function handleUpdateCart() {
-    setSubmitting(true);
     if (!item || quantity > item.quantity) {
       const updatedQuantity = item ? quantity - item.quantity : quantity;
-      agent.Basket.addItem(product?.id!, updatedQuantity)
-        .then((basket) => setBasket(basket))
-        .catch((error) => console.log(error))
-        .finally(() => setSubmitting(false));
-    } else {
+      dispatch(
+        addBasketItemAsync({
+          productId: product?.id!,
+          quantity: updatedQuantity,
+        }));
+
+    }
+    else {
       const updatedQuantity = item.quantity - quantity;
-      agent.Basket.removeItem(product?.id!, updatedQuantity)
-        .then(() => removeItem(product?.id!, updatedQuantity))
-        .catch((error) => console.log(error))
-        .finally(() => setSubmitting(false));
+      dispatch(
+        removeBasketItemAsync({
+        productId: product?.id!,
+        quantity: updatedQuantity,
+      }));
     }
   }
 
-  if (loading) return <LoadingComponent message="Loading Products....." />;
+  if (productStatus.includes('pending')) return <LoadingComponent message="Loading
+Products....." />;
   if (!product) return <NotFound />
 
   return (
@@ -107,16 +109,17 @@ export default function ProductDetails() {
                 disabled={
                   item?.quantity === quantity || (!item && quantity === 0)
                 }
-                loading={submitting}
+                loading={status === ("pendingAddItem" + product.id)}
                 onClick={handleUpdateCart}
                 sx={{ height: "55px" }}
                 color="primary"
                 size="large"
-                variant="contained"
-                fullWidth
+                variant="contained" fullWidth
               >
-                {item ? "Update Quantity" : "Add to Cart"}
+                {item ? "Update Quantity" : "Add to Cart"
+                }
               </LoadingButton>
+
             </Grid>
           </Grid>
 

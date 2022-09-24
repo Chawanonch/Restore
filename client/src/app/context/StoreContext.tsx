@@ -6,10 +6,11 @@ interface StoreContextValue {
     setBasket: (basket: Basket) => void;
     removeItem: (productId: number, quantity: number) => void;
 }
-
+//กำหนดค่าไว้ก่อน(สร้างห้องครัว)
 export const StoreContext = createContext<StoreContextValue | undefined>(
     undefined
 );
+
 export function useStoreContext() {
     const context = useContext(StoreContext);
     if (context === undefined) {
