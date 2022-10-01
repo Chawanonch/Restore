@@ -1,6 +1,6 @@
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import { Container } from '@mui/system';
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import AboutPage from '../../features/about/AboutPage';
@@ -20,24 +20,33 @@ import ContactPage from '../../features/contact/ContactPage';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useAppDispatch, useAppSelector } from '../store/configureStore';
-import { setBasket } from '../../features/basket/basketSlice';
+import { fetchBasketAsync, setBasket } from '../../features/basket/basketSlice';
+import Login from '../../features/account/Login';
+import Register from '../../features/account/Register';
+import { fetchCurrentUser } from '../../features/account/accountSlice';
+import { PrivateLogin, PrivateRoute } from './PrivateRoute';
+import CheckoutPage from '../../features/checkout/CheckoutPage';
 
 export default function App() {
 
   // const { setBasket } = useStoreContext(); //ควบคุมสเตทด้วย React context to Centralize
   const dispatch = useAppDispatch()
   const [loading, setLoading] = useState(true);
-  const { fullscreen } = useAppSelector(state=>state.screen)
+  const { fullscreen } = useAppSelector(state => state.screen)
+
+  const initApp = useCallback(async () => {
+    try {
+      await dispatch(fetchCurrentUser());
+      await dispatch(fetchBasketAsync());
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
-    const buyerId = getCookie("buyerId");
-    if (buyerId) {
-      agent.Basket.get()
-        .then((basket) => dispatch(setBasket(basket)))
-        .catch((error) => console.log(error))
-        .finally(() => setLoading(false));
-    } else setLoading(false);
-  }, [dispatch]);
+    initApp().then(() => setLoading(false));
+  }, [initApp]);
 
   const [mode, setMode] = useState(true)
   const displayMode = mode ? 'light' : 'dark'
@@ -68,7 +77,7 @@ export default function App() {
         />
         <CssBaseline />
         <Header handleMode={handleMode} />
-          {fullscreen ? <>{ mainroute }</> : <Container sx={{mt:3}}>{mainroute}</Container>}
+        {fullscreen ? <>{mainroute}</> : <Container sx={{ mt: 3 }}>{mainroute}</Container>}
       </ThemeProvider>
     </>
   )
@@ -79,8 +88,25 @@ const mainroute = <Routes>
   <Route path='/about' element={<AboutPage />} />
   <Route path='/contact' element={<ContactPage />} />
   <Route path='/catalog' element={<Catalog />} />
+
   <Route path='/catalog/:id' element={<ProductDetails />} />
+  
   <Route path='/basket' element={<BasketPage />} />
   <Route path='/server-error' element={<ServerError />} />
   <Route path='*' element={<NotFound />} />
+
+  <Route element={<PrivateRoute />}>
+    <Route path="/checkout" element={<CheckoutPage />} />
+  </Route>
+
+  <Route
+    path="/login"
+    element={
+      <PrivateLogin>
+        <Login />
+      </PrivateLogin>
+    }
+  />
+
+  <Route path="/register" element={<Register />} />
 </Routes>

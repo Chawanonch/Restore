@@ -17,7 +17,7 @@ import BasketSummary from "./basketSummary";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../../app/store/configureStore";
-import { setBasket, removeItem, removeBasketItemAsync, addBasketItemAsync } from "./basketSlice";
+import { setBasket, removeBasketItemAsync, addBasketItemAsync } from "./basketSlice";
 
 export default function BasketPage() {
 
