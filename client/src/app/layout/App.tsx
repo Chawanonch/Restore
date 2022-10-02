@@ -26,6 +26,7 @@ import Register from '../../features/account/Register';
 import { fetchCurrentUser } from '../../features/account/accountSlice';
 import { PrivateLogin, PrivateRoute } from './PrivateRoute';
 import CheckoutPage from '../../features/checkout/CheckoutPage';
+import OrderPage from '../../features/orders/OrderPage';
 
 export default function App() {
 
@@ -97,6 +98,8 @@ const mainroute = <Routes>
 
   <Route element={<PrivateRoute />}>
     <Route path="/checkout" element={<CheckoutPage />} />
+    <Route path="/order" element={<OrderPage/>}/>
+
   </Route>
 
   <Route

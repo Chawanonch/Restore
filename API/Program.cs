@@ -75,7 +75,7 @@ builder.Services.AddIdentityCore<User>(opt =>
     opt.User.RequireUniqueEmail = true;
     opt.Password.RequireLowercase = false;
 })
-.AddRoles<IdentityRole>()
+.AddRoles<Role>()
 .AddEntityFrameworkStores<StoreContext>();
 
 //ยืนยัน Token ที่ได้รับว่าถูกต้องหรือไม่บนเซิฟเวอร์
