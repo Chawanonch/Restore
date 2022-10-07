@@ -25,8 +25,8 @@ import Login from '../../features/account/Login';
 import Register from '../../features/account/Register';
 import { fetchCurrentUser } from '../../features/account/accountSlice';
 import { PrivateLogin, PrivateRoute } from './PrivateRoute';
-import CheckoutPage from '../../features/checkout/CheckoutPage';
 import OrderPage from '../../features/orders/OrderPage';
+import CheckoutWrapper from '../../features/checkout/CheckoutWrapper';
 
 export default function App() {
 
@@ -89,17 +89,14 @@ const mainroute = <Routes>
   <Route path='/about' element={<AboutPage />} />
   <Route path='/contact' element={<ContactPage />} />
   <Route path='/catalog' element={<Catalog />} />
-
   <Route path='/catalog/:id' element={<ProductDetails />} />
-  
   <Route path='/basket' element={<BasketPage />} />
   <Route path='/server-error' element={<ServerError />} />
   <Route path='*' element={<NotFound />} />
 
   <Route element={<PrivateRoute />}>
-    <Route path="/checkout" element={<CheckoutPage />} />
+    <Route path="/checkout" element={<CheckoutWrapper/>} />
     <Route path="/order" element={<OrderPage/>}/>
-
   </Route>
 
   <Route
