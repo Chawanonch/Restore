@@ -2,6 +2,7 @@ using System.Text;
 using API.Data;
 using API.Entities;
 using API.Middleware;
+using API.RequestHelpers;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -16,43 +17,38 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
 #region Swagger Config
 builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "Jwt auth header",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header
-            },
-            new List<string>()
-        }
+            Description = "Jwt auth header",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer"
+        });
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header
+                        },
+                        new List<string>()
+                    }
+        });
     });
-});
 #endregion
 
-// builder.Services.AddDbContext<StoreContext>(opt =>
-// {
-//     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-// });
 #region เชื่อมต่อไปยัง heroku Server และใช้ค่าที่ config ไว้แล้วในฝั่ง Heroku
         builder.Services.AddDbContext<StoreContext>(options =>
         {
@@ -93,59 +89,62 @@ builder.Services.AddSwaggerGen(c =>
 
 #region Cors
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
-                    policy =>
-                    {
-                        policy.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials() //Cookie
-                        .WithOrigins("http://localhost:3000");
-                    });
+                      policy =>
+                      {
+                          policy.AllowAnyHeader()
+                          .AllowAnyMethod()   //
+                          .AllowCredentials() //อนุญาตให้ใช้คุกกี้
+                          .WithOrigins("http://localhost:3000");
+                      });
 });
 #endregion
 
-#region Identityสร้างเซอร์วิส User,Role (ระวังการเรียงล าดับ)
+#region Identityสร้างเซอร์วิส User,Role (ระวังการเรียงลำดับ)
 builder.Services.AddIdentityCore<User>(opt =>
 {
     opt.User.RequireUniqueEmail = true;
-    opt.Password.RequireLowercase = false;
 })
-.AddRoles<Role>()
-.AddEntityFrameworkStores<StoreContext>();
+     .AddRoles<Role>()
+    .AddEntityFrameworkStores<StoreContext>();
 
 //ยืนยัน Token ที่ได้รับว่าถูกต้องหรือไม่บนเซิฟเวอร์
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-.AddJwtBearer(opt =>
-    {
-    opt.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-        .GetBytes(builder.Configuration["JWTSettings:TokenKey"]))
-    };
-});
+                       .AddJwtBearer(opt =>
+                       {
+                           opt.TokenValidationParameters = new TokenValidationParameters
+                           {
+                               ValidateIssuer = false,
+                               ValidateAudience = false,
+                               ValidateLifetime = true,
+                               ValidateIssuerSigningKey = true,
+                               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                                   .GetBytes(builder.Configuration["JWTSettings:TokenKey"]))
+                           };
+                       });
+#endregion
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<PaymentService>();
-#endregion
+builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+builder.Services.AddScoped<ImageService>();
 
+// middle where
 var app = builder.Build();
 
-#region //สร้างข้อมูลจำลอง Fake data
-using var scope = app.Services.CreateScope(); //using หลังท ํางํานเสร็จจะถูกท ําลํายจํากMemory
+#region //สร้ํางข้อมูลจ ําลอง Fake data
+using var scope = app.Services.CreateScope(); //using หลังทำงานเสร็จจะถูกทำลายจากMemory
 var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 try
 {
     await context.Database.MigrateAsync(); //สร้ําง DB ให้อัตโนมัติถ้ํายังไม่มี
-    await DbInitializer.Initialize(context, userManager); //สร้างข้อมูลสินค้าและยูเซอร์จ าลอง
+    await DbInitializer.Initialize(context, userManager); //สร้างข้อมูลสินค้าและยูเซอร์จำลอง
 }
 catch (Exception ex)
 {
@@ -160,11 +159,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-#region ส่ง error ไปให้ Axios ตอนทำ Interceptor
+//app.UseHttpsRedirection(); web
+
+#region ส่ง error ไปให้Axios ตอนท ํา Interceptor
 app.UseMiddleware<ExceptionMiddleware>();
 #endregion
-
-// app.UseHttpsRedirection(); Web
 
 app.UseRouting();
 
@@ -181,6 +180,5 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
     endpoints.MapFallbackToController("Index", "Fallback");
 });
-
 
 await app.RunAsync();

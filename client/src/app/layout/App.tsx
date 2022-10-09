@@ -27,6 +27,7 @@ import { fetchCurrentUser } from '../../features/account/accountSlice';
 import { PrivateLogin, PrivateRoute } from './PrivateRoute';
 import OrderPage from '../../features/orders/OrderPage';
 import CheckoutWrapper from '../../features/checkout/CheckoutWrapper';
+import Inventory from '../../features/admin/Inventory';
 
 export default function App() {
 
@@ -93,10 +94,11 @@ const mainroute = <Routes>
   <Route path='/basket' element={<BasketPage />} />
   <Route path='/server-error' element={<ServerError />} />
   <Route path='*' element={<NotFound />} />
+  <Route path="/checkout" element={<CheckoutWrapper/>} />
+  <Route path="/order" element={<OrderPage/>}/>
 
-  <Route element={<PrivateRoute />}>
-    <Route path="/checkout" element={<CheckoutWrapper/>} />
-    <Route path="/order" element={<OrderPage/>}/>
+  <Route element={<PrivateRoute roles={["Admin"]}/>}>
+    <Route path="/inventory" element={<Inventory />} />
   </Route>
 
   <Route

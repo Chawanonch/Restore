@@ -73,6 +73,13 @@ const requests = {
     axios.get(url, { params }).then(ResponseBody),
   post: (url: string, body?: {}) => axios.post(url, body).then(ResponseBody),
   delete: (url: string) => axios.delete(url).then(ResponseBody),
+  postForm: (url: string, data: FormData) => axios.post(url, data, {
+    headers: { 'Content-type': 'multipart/form-data' }
+  }).then(ResponseBody),
+  putForm: (url: string, data: FormData) => axios.put(url, data, {
+      headers: { 'Content-type': 'multipart/form-data' }
+  }).then(ResponseBody),
+
 };
 
 const Catalog = {
@@ -113,6 +120,19 @@ const Account = {
   const Payments = {
     createPaymentIntent: () => requests.post('payments', {})
 }
+function createFormData(item: any) {
+  let formData = new FormData();
+  for (const key in item) {
+      formData.append(key, item[key])
+  }
+  return formData;
+}
+
+const Admin = {
+  createProduct: (product: any) => requests.postForm('products', createFormData(product)),
+  updateProduct: (product: any) => requests.putForm('products', createFormData(product)),
+  deleteProduct: (id: number) => requests.delete(`products/${id}`)
+}
 
 const agent = {
   Catalog,
@@ -121,6 +141,7 @@ const agent = {
   Account,
   Orders,
   Payments,
+  Admin,
 };
 
 export default agent;
