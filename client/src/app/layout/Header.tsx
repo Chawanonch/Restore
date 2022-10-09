@@ -51,8 +51,16 @@ export default function Header(props: any) {
           <List sx={{ display: 'flex', alignItems: 'center' }}>
             {midLinks.map(({ title, path }) => (
               <ListItem key={title} component={NavLink} to={path} sx={navStyles}>{title}</ListItem>
+              
             ))}
+            {user && user.roles?.includes('Admin') && (
+                  <ListItem component={NavLink} to={"/inventory"} sx={navStyles}>
+                    INVENTORY
+                  </ListItem>
+                )}
           </List>
+
+         
 
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton color='inherit' size="large" component={Link} to='/basket'>
@@ -76,6 +84,7 @@ export default function Header(props: any) {
                     </ListItem>
                   ))
                 }
+                 
               </List>
               )
             }

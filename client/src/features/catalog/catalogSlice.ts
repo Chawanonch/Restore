@@ -16,8 +16,8 @@ interface CatalogState {
   types: string[];
   productParams: ProductParams;
   metaData: MetaData | null;
-}
-
+  }
+  
 const productsAdapter = createEntityAdapter<Product>();
 
 function getAxiosParams(productParams: ProductParams) {
@@ -34,20 +34,19 @@ function getAxiosParams(productParams: ProductParams) {
   return params;
 }
 
-export const fetchProductsAsync = createAsyncThunk<
-  Product[],
-  void,
-  { state: RootState }
->("catalog/fetchProductsAsync", async (_, thunkAPI) => {
-  const params = getAxiosParams(thunkAPI.getState().catalog.productParams);
-  try {
-    const response = await agent.Catalog.list(params);
-    thunkAPI.dispatch(setMetaData(response.metaData)); //วิธีเรียก action ภำยในตัวเอง
-    return response.items;
-  } catch (error: any) {
-    return thunkAPI.rejectWithValue({ error: error.data });
+export const fetchProductsAsync = createAsyncThunk<Product[],void,{state:RootState}>(
+  "catalog/fetchProductsAsync",
+  async (_, thunkAPI) => {
+    const params = getAxiosParams(thunkAPI.getState().catalog.productParams);
+    try {
+      const response = await agent.Catalog.list(params);
+      thunkAPI.dispatch(setMetaData(response.metaData)); //วิธีเรียก action ภำยในตัวเอง
+      return response.items;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue({ error: error.data });
+    }
   }
-});
+);
 
 export const fetchProductAsync = createAsyncThunk<Product, number>(
   "catalog/fetchProductAsync",
@@ -76,12 +75,12 @@ export const fetchFilters = createAsyncThunk(
 // brands: [],types: [] เก็บค่ำที่ถูกเลือก ส ำหรับส่งไปให้ฝั่ง API
 function initParams(): ProductParams {
   return {
-    pageNumber: 1,
-    pageSize: 6,
-    orderBy: "name",
-    brands: [],
-    types: [],
-  };
+  pageNumber: 1,
+  pageSize: 6,
+  orderBy: 'name',
+  brands: [],
+  types: []
+  }
 }
 
 export const catalogSlice = createSlice({
@@ -93,7 +92,7 @@ export const catalogSlice = createSlice({
     brands: [],
     types: [],
     productParams: initParams(),
-    metaData: null,
+    metaData: null
   }),
   reducers: {
     setProductParams: (state, action) => {
@@ -112,9 +111,18 @@ export const catalogSlice = createSlice({
     },
     setPageNumber: (state, action) => {
       state.productsLoaded = false;
-      state.productParams = { ...state.productParams, ...action.payload };
+      state.productParams = {...state.productParams, ...action.payload};
     },
+    setProduct: (state, action) => {
+      productsAdapter.upsertOne(state, action.payload);
+      state.productsLoaded = false;
+    },
+    removeProduct: (state, action) => {
+      productsAdapter.removeOne(state, action.payload); //มีไว้ทำอะไร
+      state.productsLoaded = false; //state เปลี่ยนไปทำการโหลดข้อมูลมาใหม่ที่ useProduct.tsx
   },
+  },
+
   extraReducers: (builder) => {
     builder.addCase(fetchProductsAsync.pending, (state) => {
       state.status = "pendingFetchProducts";
@@ -127,7 +135,6 @@ export const catalogSlice = createSlice({
     builder.addCase(fetchProductsAsync.rejected, (state, action) => {
       state.status = "idle";
     });
-
     builder.addCase(fetchProductAsync.pending, (state) => {
       state.status = "pendingFetchProduct";
     });
@@ -156,11 +163,10 @@ export const catalogSlice = createSlice({
   },
 });
 
-export default catalogSlice.reducer;
-
 export const productSelectors = productsAdapter.getSelectors(
   (state: RootState) => state.catalog
 );
 
-export const { setProductParams, resetProductParams, setMetaData,setPageNumber } =
-  catalogSlice.actions;
+export default catalogSlice.reducer;
+
+export const {setProductParams, resetProductParams, setMetaData, setPageNumber,setProduct,removeProduct} = catalogSlice.actions;
